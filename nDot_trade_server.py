@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 import pandas_ta as ta
 import asyncio
+from nDot_trade_server_folder_manager import NTradeFolderManager
 
 
 class ntade:
@@ -33,7 +34,7 @@ class ntade:
             print(e)
         else:
 
-            i_df = pd.DataFrame(klines, columns=('Date',
+            i_df = pd.DataFrame(klines, columns=['Date',
                                                  'Open', 'High', 'Low', 'Close',
                                                  'Volume',
                                                  'Close time',
@@ -41,7 +42,7 @@ class ntade:
                                                  'Number_of_trades',
                                                  'Taker_buy_base_asset_volume',
                                                  'Taker_buy_quote_asset_volume',
-                                                 'Ignore'))
+                                                 'Ignore'])
 
             i_df = i_df.drop(['Close time', 'Ignore'], axis=1)
 
@@ -243,16 +244,20 @@ class ntade:
 
 if __name__ == "__main__":
     nddf = {}
-    nt = ntade()
-    symbol = "BTCUSDT"
-    nddf[symbol] = nt.get_klines_mth2(symbol, 1)
-    print(datetime.datetime.now())
-    nt.add_all_tech(symbol)
-    print(datetime.datetime.now())
-    nt.start_stream()
+    # nt = ntade()
+    # symbol = "BTCUSDT"
+    # nddf[symbol] = nt.get_klines_mth2(symbol, 1)
+    # print(datetime.datetime.now())
+    # nt.add_all_tech(symbol)
+    # print(datetime.datetime.now())
+    # nt.start_stream()
+    # while True:
+    #     time.sleep(30)
+    #     pass
+    nfm = NTradeFolderManager()
     while True:
-        time.sleep(30)
-        pass
+        nfm.process_clients()
+        time.sleep(25)
 
 
 

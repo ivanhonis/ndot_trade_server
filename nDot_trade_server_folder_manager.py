@@ -1,18 +1,30 @@
 import os
 import shutil
-import psutil
-import configparser
 
-class ntrade_folder_manager:
+import numpy as np
+import configparser
+import time
+import datetime
+import pickle
+import psutil
+
+
+class NTradeFolderManager:
     def __init__(self):
+        self.main_dir = r'.\\'
         self.slots_dir = r'.\\SLOTS'
         self.clients_dir = r'.\\CLIENTS'
+        self.config_dir = r'.\\CONFIGS'
+        self.messages_dir = r'.\\MESSAGES'
+        self.fn_trade_rights = r'.\\CONFIGS\\nDot_trade_rights.pickle'
         self.clients_rights = {}
-        self.status = {}
-        self.messages = []
+        self.trade_rights = {}
+        self.commands = {"trade": "nDot_command_trade.pickle",
+                         "push": "nDot_command_push.npy"}
 
-    def log(self, text):
-        print(text)
+    @staticmethod
+    def log(text):
+        print(datetime.datetime.now(), " - ", text)
 
     def add_slot(self, project):
         newpath = self.slots_dir
@@ -21,11 +33,13 @@ class ntrade_folder_manager:
 
         newpath = self.slots_dir + "\\" + project
         if not os.path.exists(newpath):
+            self.log(f"add_slot: {project}")
             os.makedirs(newpath)
 
-    def remove_slot(self, projekt):
-        delpath = self.slots_dir + "\\" + projekt
+    def remove_slot(self, project):
+        delpath = self.slots_dir + "\\" + project
         if os.path.exists(delpath):
+            self.log(f"remove_slot: {project}")
             shutil.rmtree(delpath)
 
     def add_client(self, client):
@@ -36,9 +50,14 @@ class ntrade_folder_manager:
 
         newpath = self.clients_dir + "\\" + client
         if not os.path.exists(newpath):
+            self.log(f"add_client: {client}")
             os.makedirs(newpath)
 
         newpath = self.clients_dir + "\\" + client + "\\INCOMING"
+        if not os.path.exists(newpath):
+            os.makedirs(newpath)
+
+        newpath = self.clients_dir + "\\" + client + "\\INCOMING\\ATTACHMENT"
         if not os.path.exists(newpath):
             os.makedirs(newpath)
 
@@ -49,9 +68,10 @@ class ntrade_folder_manager:
     def remove_client(self, client):
         delpath = self.clients_dir + "\\" + client
         if os.path.exists(delpath):
+            self.log(f"remove_client: {client}")
             shutil.rmtree(delpath)
 
-    def get_client_incoming(self, client):
+    def get_client_incoming_commands(self, client):
         path = self.clients_dir + "\\" + client + "\\INCOMING"
         return os.listdir(path)
 
@@ -60,20 +80,84 @@ class ntrade_folder_manager:
         if os.path.exists(fname):
             os.remove(fname)
 
+    def set_trade(self, client):
+        fn_from = self.clients_dir + "\\" + client + "\\INCOMING\\" + self.commands['trade']
+        fn_to = self.fn_trade_rights
+        if os.path.exists(fn_from):
+            self.log(f"set_trade: {client}")
+            shutil.move(fn_from, fn_to)
+
+    def set_trade_rights(self):
+        self.trade_rights = pickle.load(open(self.fn_trade_rights, "rb"))
+
+    def get_trade_rights(self):
+        if os.path.exists(self.fn_trade_rights):
+            return pickle.load(open(self.fn_trade_rights, "rb"))
+        else:
+            return {}
+
+    def get_trade_right_by_project(self, project):
+        if os.path.exists(self.fn_trade_rights):
+            self.trade_rights = self.get_trade_rights()
+            if project in self.trade_rights:
+                return self.trade_rights[project]
+            else:
+                return False
+        else:
+            return False
+
+    def set_model(self, client, project):
+        tf_name = f"nDot_TF_MODEL_{project}.h5"
+        minmax_name = f"nDot_MinMaxScaler_{project}.pickle"
+        config_name = f"nDot_PRO_{project}.txt"
+
+        fn_from = self.clients_dir + "\\" + client + "\\INCOMING\\ATTACHMENT\\" + tf_name
+        fn_to = self.slots_dir + "\\" + project + "\\" + tf_name
+        if os.path.exists(fn_from):
+            self.log(f"set TF model: {client} -> {project}")
+            shutil.move(fn_from, fn_to)
+
+        fn_from = self.clients_dir + "\\" + client + "\\INCOMING\\ATTACHMENT\\" + minmax_name
+        fn_to = self.slots_dir + "\\" + project + "\\" + minmax_name
+        if os.path.exists(fn_from):
+            self.log(f"set MinMax: {client} -> {project}")
+            shutil.move(fn_from, fn_to)
+
+        fn_from = self.clients_dir + "\\" + client + "\\INCOMING\\ATTACHMENT\\" + config_name
+        fn_to = self.slots_dir + "\\" + project + "\\" + config_name
+        if os.path.exists(fn_from):
+            self.log(f"set project config: {client} -> {project}")
+            shutil.move(fn_from, fn_to)
+
+    # command structure ---------------------------------------------
+    #     trade = {"BTCUSDT_P10INTX": True,
+    #              "ETHUSDT_P10INTX": True}
+    #
+    #     push = ["BTCUSDT_P10INTX",
+    #             "ETHUSDT_P10INTX"]
+
     def process_client_incoming(self, client):
-        commands = self.get_client_incoming(client)
-        if len(commands) > 0:
-            for cmd in commands:
-                if cmd == "nDot_command_slots.npy" and self.clients_rights[client]['right_command_slot']:
-                    pass
+        self.log(f"check client: {client}")
+        cmd_list = self.get_client_incoming_commands(client)
+        if len(cmd_list) > 0:
+            for cmd in cmd_list:
+                if cmd == self.commands['trade'] and self.clients_rights[client]['right_command_trade']:
+                    self.log(f"command: trade {client}")
+                    self.set_trade(client)
+                elif cmd == self.commands['push'] and self.clients_rights[client]['right_command_push']:
+                    self.log(f"command: push {client}")
+                    self.process_slots(client)
+                if cmd != "ATTACHMENT":
                     self.remove_client_incoming(client, cmd)
-                elif cmd == "nDot_command_trade.npy" and self.clients_rights[client]['right_command_trade']:
-                    pass
-                    self.remove_client_incoming(client, cmd)
-                elif cmd == "nDot_command_push.npy" and self.clients_rights[client]['right_command_push']:
-                    pass
-                    # át kell tenni a megérkezett fileokat
-                    self.remove_client_incoming(client, cmd)
+                    self.log(f"{cmd} - removed")
+
+    def process_slots(self, client):
+        fn_push = self.clients_dir + "\\" + client + "\\INCOMING\\" + self.commands['push']
+        ipush = np.load(fn_push)
+        for project in ipush:
+            self.add_slot(project)
+            self.set_model(client, project)
+        tr.remove_off_slots(ipush)
 
     def set_clients_rights(self, config):
 
@@ -89,27 +173,93 @@ class ntrade_folder_manager:
             for rh in config.options(cl):
                 self.clients_rights[cl][rh] = bl(config.get(cl, rh))
 
+    def remove_off(self):
+        #TODO: remove_off
+
+        # mindent eltakarít ami nem kell
+        # ezek hibás másolások ereményei lehetnek
+        # olyan clientnél akinek nincs push joga nem lehet semmi a attacmentben
+        # client alatt csak incomeing és outgoing lehet mindent mást ki kell törölni
+        # slot alatt csak alkönyvátrak lehetnek minden mást ki kell törölni
+        # slotban csak model minmax és projet lehet
+        pass
+
     def remove_off_clients(self, clients):
         path = self.clients_dir
-        print(os.listdir(path))
+        dlist = os.listdir(path)
+        diff_list = list(set(dlist) - set(clients))
+        for dfl in diff_list:
+            self.remove_client(dfl)
+
+    def remove_off_slots(self, ipush):
+        path = self.slots_dir
+        dlist = os.listdir(path)
+        diff_list = list(set(dlist) - set(ipush))
+        for project in diff_list:
+            self.remove_slot(project)
 
     def process_clients(self):
         config = configparser.ConfigParser()
-        conf_fname = self.clients_dir + "\\" + "nDot_clients.ini"
+        conf_fname = self.config_dir + "\\nDot_clients.ini"
         config.read(conf_fname)
         self.set_clients_rights(config)
         clients = config.sections()
+        self.remove_off_clients(clients)
         for cl in clients:
             self.add_client(cl)
             self.process_client_incoming(cl)
-    # print(config.options('SectionOne'))
-    # print(config.get('SectionOne', 'Status'))
+        self.remove_off()
+
+    def messages_to_clients(self):
+        messages = os.listdir(self.messages_dir)
+        clients = os.listdir(self.clients_dir)
+        for me in messages:
+            from_fn = self.messages_dir + "\\" + me
+            for cl in clients:
+                to_fn = self.clients_dir + "\\" + cl + "\\OUTGOING\\" + me
+                shutil.copyfile(from_fn, to_fn)
+
+        for me in messages:
+            from_fn = self.messages_dir + "\\" + me
+            os.remove(from_fn)
+
+    def get_status(self):
+        clients = os.listdir(self.clients_dir)
+        slots = os.listdir(self.slots_dir)
+        models = {}
+        slot_status = {'tf': False,
+                       'minmax': False,
+                       'config': False}
+        for project in slots:
+            models[project] = slot_status
+            tf_name = self.slots_dir + f"{project}/nDot_TF_MODEL_{project}.h5"
+            minmax_name = self.slots_dir + f"{project}/nDot_MinMaxScaler_{project}.pickle"
+            config_name = self.slots_dir + f"{project}/nDot_PRO_{project}.txt"
+            if os.path.exists(tf_name):
+                models[project]["tf"] = True
+            if os.path.exists(minmax_name):
+                models[project]["minmax"] = True
+            if os.path.exists(config_name):
+                models[project]["config"] = True
+
+        status = {"datetime": datetime.datetime.now(),
+                  "clients": clients,
+                  "slots": models,
+                  "trade_rights": self.get_trade_rights(),
+                  "processors": psutil.cpu_percent(interval=1, percpu=True),
+                  "virtual_memory": psutil.virtual_memory(),
+                  "disk_usage": psutil.disk_usage("/")}
+
+        fname = self.messages_dir + r"\\nDot_trade_server_status.pickle"
+        pickle.dump(status, open(fname, "wb"))
+
+        print(status)
 
 
 if __name__ == "__main__":
     # print(psutil.cpu_percent(interval=.25, percpu=True))
 
-    tr = ntrade_folder_manager()
+    tr = NTradeFolderManager()
 
     # tr.add_slot("BTCUSDT1")
     # tr.remove_slot("BTCUSDT2")
@@ -120,4 +270,19 @@ if __name__ == "__main__":
     # tr.process_client_incoming("X")
 
     # tr.remove_client_incoming("x", "y")
-    tr.process_clients()
+    push = np.array(["BTCUSDT_P10INT",
+          "ETHUSDT_P10INT"])
+
+    np.save("nDot_command_push", push)
+
+    # trade = {"BTCUSDT_P10INTX": True,
+    #              "ETHUSDT_P10INTX": True}
+    #
+    # pickle.dump(trade, open("nDot_command_trade.pickle", "wb"))
+
+    while True:
+        tr.process_clients()
+        tr.get_status()
+        tr.messages_to_clients()
+
+        time.sleep(25)
