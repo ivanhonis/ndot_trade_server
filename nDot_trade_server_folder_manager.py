@@ -11,19 +11,21 @@ import psutil
 
 class NTradeFolderManager:
     def __init__(self):
-        self.main_dir = r'.\\'
-        self.slots_dir = r'.\\SLOTS'
-        self.clients_dir = r'.\\CLIENTS'
-        self.config_dir = r'.\\CONFIGS'
-        self.messages_dir = r'.\\MESSAGES'
-        self.fn_trade_rights = r'.\\CONFIGS\\nDot_trade_rights.pickle'
+        self.main_dir = os.getcwd()
+        self.slots_dir = self.main_dir + r'/SLOTS'
+        self.clients_dir = self.main_dir + r'/CLIENTS'
+        self.config_dir = self.main_dir + r'/CONFIGS'
+        self.messages_dir = self.main_dir + r'/MESSAGES'
+        self.fn_trade_rights = self.main_dir + r'/CONFIGS/nDot_trade_rights.pickle'
         self.clients_rights = {}
         self.trade_rights = {}
         self.commands = {"trade": "nDot_command_trade.pickle",
                          "push": "nDot_command_push.npy"}
 
     @staticmethod
-    def log(text):
+    def log(text, line=False):
+        if line:
+            print('-' * 90)
         print(datetime.datetime.now(), " - ", text)
 
     def add_slot(self, project):
@@ -31,13 +33,13 @@ class NTradeFolderManager:
         if not os.path.exists(newpath):
             os.makedirs(newpath)
 
-        newpath = self.slots_dir + "\\" + project
+        newpath = self.slots_dir + r"/" + project
         if not os.path.exists(newpath):
             self.log(f"add_slot: {project}")
             os.makedirs(newpath)
 
     def remove_slot(self, project):
-        delpath = self.slots_dir + "\\" + project
+        delpath = self.slots_dir + r"/" + project
         if os.path.exists(delpath):
             self.log(f"remove_slot: {project}")
             shutil.rmtree(delpath)
@@ -48,47 +50,44 @@ class NTradeFolderManager:
         if not os.path.exists(newpath):
             os.makedirs(newpath)
 
-        newpath = self.clients_dir + "\\" + client
+        newpath = self.clients_dir + r"/" + client
         if not os.path.exists(newpath):
             self.log(f"add_client: {client}")
             os.makedirs(newpath)
 
-        newpath = self.clients_dir + "\\" + client + "\\INCOMING"
+        newpath = self.clients_dir + r"/" + client + r"/INCOMING"
         if not os.path.exists(newpath):
             os.makedirs(newpath)
 
-        newpath = self.clients_dir + "\\" + client + "\\INCOMING\\ATTACHMENT"
+        newpath = self.clients_dir + r"/" + client + r"/INCOMING/ATTACHMENT"
         if not os.path.exists(newpath):
             os.makedirs(newpath)
 
-        newpath = self.clients_dir + "\\" + client + "\\OUTGOING"
+        newpath = self.clients_dir + r"/" + client + r"/OUTGOING"
         if not os.path.exists(newpath):
             os.makedirs(newpath)
 
     def remove_client(self, client):
-        delpath = self.clients_dir + "\\" + client
+        delpath = self.clients_dir + r"/" + client
         if os.path.exists(delpath):
             self.log(f"remove_client: {client}")
             shutil.rmtree(delpath)
 
     def get_client_incoming_commands(self, client):
-        path = self.clients_dir + "\\" + client + "\\INCOMING"
+        path = self.clients_dir + r"/" + client + r"/INCOMING"
         return os.listdir(path)
 
     def remove_client_incoming(self, client, dfname):
-        fname = self.clients_dir + "\\" + client + "\\INCOMING\\" + dfname
+        fname = self.clients_dir + r"/" + client + r"/INCOMING/" + dfname
         if os.path.exists(fname):
             os.remove(fname)
 
     def set_trade(self, client):
-        fn_from = self.clients_dir + "\\" + client + "\\INCOMING\\" + self.commands['trade']
+        fn_from = self.clients_dir + r"/" + client + r"/INCOMING/" + self.commands['trade']
         fn_to = self.fn_trade_rights
         if os.path.exists(fn_from):
             self.log(f"set_trade: {client}")
             shutil.move(fn_from, fn_to)
-
-    def set_trade_rights(self):
-        self.trade_rights = pickle.load(open(self.fn_trade_rights, "rb"))
 
     def get_trade_rights(self):
         if os.path.exists(self.fn_trade_rights):
@@ -111,21 +110,23 @@ class NTradeFolderManager:
         minmax_name = f"nDot_MinMaxScaler_{project}.pickle"
         config_name = f"nDot_PRO_{project}.txt"
 
-        fn_from = self.clients_dir + "\\" + client + "\\INCOMING\\ATTACHMENT\\" + tf_name
-        fn_to = self.slots_dir + "\\" + project + "\\" + tf_name
-        if os.path.exists(fn_from):
+        fn_project_to = self.slots_dir + r"/" + project
+
+        fn_from = self.clients_dir + r"/" + client + r"/INCOMING/ATTACHMENT/" + tf_name
+        fn_to = self.slots_dir + r"/" + project + r"/" + tf_name
+        if os.path.exists(fn_from) and os.path.exists(fn_project_to):
             self.log(f"set TF model: {client} -> {project}")
             shutil.move(fn_from, fn_to)
 
-        fn_from = self.clients_dir + "\\" + client + "\\INCOMING\\ATTACHMENT\\" + minmax_name
-        fn_to = self.slots_dir + "\\" + project + "\\" + minmax_name
-        if os.path.exists(fn_from):
+        fn_from = self.clients_dir + r"/" + client + r"/INCOMING/ATTACHMENT/" + minmax_name
+        fn_to = self.slots_dir + r"/" + project + r"/" + minmax_name
+        if os.path.exists(fn_from) and os.path.exists(fn_project_to):
             self.log(f"set MinMax: {client} -> {project}")
             shutil.move(fn_from, fn_to)
 
-        fn_from = self.clients_dir + "\\" + client + "\\INCOMING\\ATTACHMENT\\" + config_name
-        fn_to = self.slots_dir + "\\" + project + "\\" + config_name
-        if os.path.exists(fn_from):
+        fn_from = self.clients_dir + r"/" + client + r"/INCOMING/ATTACHMENT/" + config_name
+        fn_to = self.slots_dir + r"/" + project + r"/" + config_name
+        if os.path.exists(fn_from) and os.path.exists(fn_project_to):
             self.log(f"set project config: {client} -> {project}")
             shutil.move(fn_from, fn_to)
 
@@ -137,7 +138,6 @@ class NTradeFolderManager:
     #             "ETHUSDT_P10INTX"]
 
     def process_client_incoming(self, client):
-        self.log(f"check client: {client}")
         cmd_list = self.get_client_incoming_commands(client)
         if len(cmd_list) > 0:
             for cmd in cmd_list:
@@ -152,12 +152,12 @@ class NTradeFolderManager:
                     self.log(f"{cmd} - removed")
 
     def process_slots(self, client):
-        fn_push = self.clients_dir + "\\" + client + "\\INCOMING\\" + self.commands['push']
+        fn_push = f"{self.clients_dir}/{client}/INCOMING/{self.commands['push']}"
         ipush = np.load(fn_push)
         for project in ipush:
             self.add_slot(project)
             self.set_model(client, project)
-        tr.remove_off_slots(ipush)
+        self.remove_off_slots(ipush)
 
     def set_clients_rights(self, config):
 
@@ -200,61 +200,77 @@ class NTradeFolderManager:
 
     def process_clients(self):
         config = configparser.ConfigParser()
-        conf_fname = self.config_dir + "\\nDot_clients.ini"
+        conf_fname = self.config_dir + r"/nDot_clients.ini"
         config.read(conf_fname)
         self.set_clients_rights(config)
         clients = config.sections()
-        self.remove_off_clients(clients)
         for cl in clients:
             self.add_client(cl)
             self.process_client_incoming(cl)
+        self.remove_off_clients(clients)
         self.remove_off()
 
     def messages_to_clients(self):
         messages = os.listdir(self.messages_dir)
         clients = os.listdir(self.clients_dir)
         for me in messages:
-            from_fn = self.messages_dir + "\\" + me
+            from_fn = self.messages_dir + r"/" + me
             for cl in clients:
-                to_fn = self.clients_dir + "\\" + cl + "\\OUTGOING\\" + me
+                to_fn = self.clients_dir + r"/" + cl + r"/OUTGOING/" + me
                 shutil.copyfile(from_fn, to_fn)
 
         for me in messages:
-            from_fn = self.messages_dir + "\\" + me
+            from_fn = self.messages_dir + r"/" + me
             os.remove(from_fn)
 
     def get_status(self):
         clients = os.listdir(self.clients_dir)
-        slots = os.listdir(self.slots_dir)
+        if os.path.exists(self.slots_dir):
+            slots = os.listdir(self.slots_dir)
+        else:
+            slots = {}
         models = {}
-        slot_status = {'tf': False,
-                       'minmax': False,
-                       'config': False}
         for project in slots:
-            models[project] = slot_status
-            tf_name = self.slots_dir + f"{project}/nDot_TF_MODEL_{project}.h5"
-            minmax_name = self.slots_dir + f"{project}/nDot_MinMaxScaler_{project}.pickle"
-            config_name = self.slots_dir + f"{project}/nDot_PRO_{project}.txt"
+            models[project] = {'tf': 0.0,
+                               'minmax': 0.0,
+                               'config': 0.0}
+            tf_name = self.slots_dir + f"/{project}/nDot_TF_MODEL_{project}.h5"
+            minmax_name = self.slots_dir + f"/{project}/nDot_MinMaxScaler_{project}.pickle"
+            config_name = self.slots_dir + f"/{project}/nDot_PRO_{project}.txt"
             if os.path.exists(tf_name):
-                models[project]["tf"] = True
+                models[project]["tf"] = os.os_path.getmtime(tf_name)
             if os.path.exists(minmax_name):
-                models[project]["minmax"] = True
+                models[project]["minmax"] = os.os_path.getmtime(minmax_name)
             if os.path.exists(config_name):
-                models[project]["config"] = True
+                models[project]["config"] = os.os_path.getmtime(config_name)
+
+        vm = psutil.virtual_memory()
+        vmem = {'total': int(vm.total),
+        'available': int(vm.available),
+        'percent': float(vm.percent)}
+
+        du = psutil.disk_usage("/")
+        dusage = {'total': int(du.total),
+        'used': int(du.used),
+        'free': int(du.free),
+        'percent': float(du.percent)}
+
+        proc = list(psutil.cpu_percent(interval=1, percpu=True))
 
         status = {"datetime": datetime.datetime.now(),
                   "clients": clients,
                   "slots": models,
                   "trade_rights": self.get_trade_rights(),
-                  "processors": psutil.cpu_percent(interval=1, percpu=True),
-                  "virtual_memory": psutil.virtual_memory(),
-                  "disk_usage": psutil.disk_usage("/")}
+                  "processors": proc,
+                  "virtual_memory": vmem,
+                  "disk_usage": dusage}
 
-        fname = self.messages_dir + r"\\nDot_trade_server_status.pickle"
+        fname = self.messages_dir + r"/nDot_trade_server_status.pickle"
         pickle.dump(status, open(fname, "wb"))
 
-        print(status)
-
+        self.log(str(status["trade_rights"]), line=True)
+        self.log(str(status["slots"]))
+        self.log(str(status["clients"]))
 
 if __name__ == "__main__":
     # print(psutil.cpu_percent(interval=.25, percpu=True))

@@ -1,4 +1,6 @@
 import datetime
+import sys
+import os
 import time
 from binance.client import Client
 from binance import AsyncClient, BinanceSocketManager, Client
@@ -12,7 +14,6 @@ import pandas as pd
 import pandas_ta as ta
 import asyncio
 from nDot_trade_server_folder_manager import NTradeFolderManager
-
 
 class ntade:
 
@@ -242,7 +243,23 @@ class ntade:
         await client.close_connection()
 
 
+def check_env():
+    newpath = os.getcwd() + r"/MESSAGES"
+    if not os.path.exists(newpath):
+        os.makedirs(newpath)
+
+    newpath = os.getcwd() + r"/CONFIGS"
+    if not os.path.exists(newpath):
+        os.makedirs(newpath)
+
+    newpath = os.getcwd() + r"/CONFIGS/nDot_clients.ini"
+    if not os.path.exists(newpath):
+        print(f"Missing: {newpath}")
+        sys.exit()
+
+
 if __name__ == "__main__":
+    check_env()
     nddf = {}
     # nt = ntade()
     # symbol = "BTCUSDT"
@@ -257,6 +274,8 @@ if __name__ == "__main__":
     nfm = NTradeFolderManager()
     while True:
         nfm.process_clients()
+        nfm.get_status()
+        nfm.messages_to_clients()
         time.sleep(25)
 
 
