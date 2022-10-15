@@ -88,6 +88,7 @@ class NTradeFolderManager:
         if os.path.exists(fn_from):
             self.log(f"set_trade: {client}")
             shutil.move(fn_from, fn_to)
+            self.get_status()
 
     def get_trade_rights(self):
         if os.path.exists(self.fn_trade_rights):
@@ -117,18 +118,24 @@ class NTradeFolderManager:
         if os.path.exists(fn_from) and os.path.exists(fn_project_to):
             self.log(f"set TF model: {client} -> {project}")
             shutil.move(fn_from, fn_to)
+        elif os.path.exists(fn_from):
+            os.remove(fn_from)
 
         fn_from = self.clients_dir + r"/" + client + r"/INCOMING/ATTACHMENT/" + minmax_name
         fn_to = self.slots_dir + r"/" + project + r"/" + minmax_name
         if os.path.exists(fn_from) and os.path.exists(fn_project_to):
             self.log(f"set MinMax: {client} -> {project}")
             shutil.move(fn_from, fn_to)
+        elif os.path.exists(fn_from):
+            os.remove(fn_from)
 
         fn_from = self.clients_dir + r"/" + client + r"/INCOMING/ATTACHMENT/" + config_name
         fn_to = self.slots_dir + r"/" + project + r"/" + config_name
         if os.path.exists(fn_from) and os.path.exists(fn_project_to):
             self.log(f"set project config: {client} -> {project}")
             shutil.move(fn_from, fn_to)
+        elif os.path.exists(fn_from):
+            os.remove(fn_from)
 
     # command structure ---------------------------------------------
     #     trade = {"BTCUSDT_P10INTX": True,
@@ -238,11 +245,11 @@ class NTradeFolderManager:
             minmax_name = self.slots_dir + f"/{project}/nDot_MinMaxScaler_{project}.pickle"
             config_name = self.slots_dir + f"/{project}/nDot_PRO_{project}.txt"
             if os.path.exists(tf_name):
-                models[project]["tf"] = os.os_path.getmtime(tf_name)
+                models[project]["tf"] = os.path.getmtime(tf_name)
             if os.path.exists(minmax_name):
-                models[project]["minmax"] = os.os_path.getmtime(minmax_name)
+                models[project]["minmax"] = os.path.getmtime(minmax_name)
             if os.path.exists(config_name):
-                models[project]["config"] = os.os_path.getmtime(config_name)
+                models[project]["config"] = os.path.getmtime(config_name)
 
         vm = psutil.virtual_memory()
         vmem = {'total': int(vm.total),

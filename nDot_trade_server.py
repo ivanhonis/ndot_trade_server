@@ -7,7 +7,7 @@ from binance import AsyncClient, BinanceSocketManager, Client
 from binance.enums import *
 from binance.exceptions import BinanceAPIException
 import requests
-from threading import Thread
+import threading
 
 import numpy as np
 import pandas as pd
@@ -230,6 +230,8 @@ class ntade:
         i_socket_list = []
         for sp in traded_symbols:
             i_socket_list.append(sp.lower() + '@kline_1m')
+
+        print(i_socket_list)
     
         client = await AsyncClient.create()
         bm = BinanceSocketManager(client)
@@ -238,7 +240,9 @@ class ntade:
         async with ts as tscm:
             while True:
                 res = await tscm.recv()
-                print(res['data']['k']['x'])
+                if res['data']['k']['x']:
+                    print(res)
+
         # ez sosem fog lefutni mert a szervernek nincs leállítási funkciója csak kilövöm éskész
         await client.close_connection()
 
@@ -258,25 +262,30 @@ def check_env():
         sys.exit()
 
 
-if __name__ == "__main__":
-    check_env()
-    nddf = {}
-    # nt = ntade()
-    # symbol = "BTCUSDT"
-    # nddf[symbol] = nt.get_klines_mth2(symbol, 1)
-    # print(datetime.datetime.now())
-    # nt.add_all_tech(symbol)
-    # print(datetime.datetime.now())
-    # nt.start_stream()
-    # while True:
-    #     time.sleep(30)
-    #     pass
-    nfm = NTradeFolderManager()
+def worker_folder_manager():
     while True:
         nfm.process_clients()
         nfm.get_status()
         nfm.messages_to_clients()
         time.sleep(25)
+
+
+def strat_folder_manager():
+    forde_manager_thr = threading.Thread(target=worker_folder_manager, args=[])
+    forde_manager_thr.start()
+
+
+if __name__ == "__main__":
+    check_env()
+    nddf = {}
+    nfm = NTradeFolderManager()
+    strat_folder_manager()
+    ntr = ntade()
+    ntr.start_stream()
+
+    while True:
+        print('1')
+        time.sleep(10)
 
 
 
