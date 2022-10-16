@@ -42,10 +42,9 @@ def strat_folder_manager():
 
 if __name__ == "__main__":
     check_env()
-    nddf = {}
-    
-    # Forder Manager ----------------------------
     tfm = NFolderManager()
+    ntr = NTrader
+
     # strat_folder_manager()
 
     # Multiprocess Trade ----------------------------
@@ -73,7 +72,7 @@ if __name__ == "__main__":
             "slots_fname": slot_fname + ".npy"
         }
         params.append(p_dict)
-    ntr = NTrader
+
     xpool = Pool(used_cores)
     res = xpool.map(ntr, params)
 
