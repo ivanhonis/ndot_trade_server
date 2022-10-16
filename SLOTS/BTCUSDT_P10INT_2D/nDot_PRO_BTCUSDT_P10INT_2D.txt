@@ -1,0 +1,94 @@
+<--------------------------------------------------->
+<description>
+<--------------------------------------------------->
+Idea: 2D probabilistic dataset qualification 0,1,2
+;
+<--------------------------------------------------->
+<dataset creator config>
+<--------------------------------------------------->
+{
+"sig_suffix": "P10INT",        <y>
+"time_window_size": 30,         <mekkora legyen az adatszet mérete visszafelé>
+"depth": 15,                     <a video hány képkockából áll>
+"bad_overweight": 1000,         <a rosszakat hányszorosan engedem túlmintavételezni>
+"x_tansform": 1,                <az adatszet reshap függvénye beépített >
+"data_window_back_shift": 0     <az adatwinow-t ennyivel visszább tolom :) >
+}
+
+;
+
+<--------------------------------------------------->
+<fields from original>
+<--------------------------------------------------->
+[
+<"ohlc4_DIFF",>     <loss:0.3713>
+"Low_DIFF",       <20min loss:0.3693 >  <5min loss:0.3760> <10min loss:0.3710 > <15min loss:0.3705> <25min loss:0.3669> <30min loss:0.3660> <35min loss:0.3664> <45min loss:0.3720>
+"High_DIFF",
+<"Low_R_OHLC4",>       <loss: 0.3684>
+<"High_R_OHLC4",>
+"Open_DIFF",        <loss:0.3621>
+"Close_DIFF",
+<"Volume_DIFF",>    <loss:0.4333>
+<"Quote_asset_volume_DIFF",>
+<"Number_of_trades_DIFF",> <loss:0.4356 >
+<"Taker_buy_base_asset_volume_DIFF",>
+<"Taker_buy_quote_asset_volume_DIFF">
+"RSI_14",        <loss:0.4091 és csökken>
+<"MACDh_26_48_12",> <loss:0.4041>
+"MACDh_12_26_9",   <loss: 0.4027>
+"EMA_5_DIFF",        <loss: 0.3683>
+<"EMA_8_DIFF",>
+<"EMA_13_DIFF",>
+<"EMA_26_DIFF",>
+<"EMA_52_DIFF",>       <loss: 0.3896>
+"SMA_5_DIFF",     <loss: 0.3728 >
+<"SMA_8_DIFF",>
+<"SMA_13_DIFF",>
+<"SMA_26_DIFF",>
+<"SMA_52_DIFF",>     <loss: 0.3772>
+<"CCI_21_0.015",>    <loss: 0.4237 és csökken>
+"VWAP_D_R_OHLC4"    <loss: 0.4048>
+<"ADX_8_ONE">    <loss:0.4304 és csökken>
+]
+
+;
+
+<--------------------------------------------------->
+<Contras cross data fields>
+<--------------------------------------------------->
+[
+<"ETHUSDT_OHLC4_DIFF",>
+<"ETHBTC_OHLC4_DIFF">
+<"ATOMUSDT_OHLC4_DIFF",>
+<"ATOMBTC_OHLC4_DIFF">
+<"ETHUSDT_HIGH_DIFF",>
+<"ETHUSDT_MACDh_12_26_9">
+]
+
+;
+
+<--------------------------------------------------->
+<Steam config - Indexes  for ndf.tech.project>
+<--------------------------------------------------->
+[
+"PRICE_DIFF",
+"MACD",
+"MACD_LONG",
+"MA_X",
+"RSI14",
+"CCI21",
+"VWAP",
+]
+;
+
+<--------------------------------------------------->
+<Steam config>
+<--------------------------------------------------->
+{
+"symbol":"BTCUSDT",         <symbol for socket>
+"max_amount": 30,           <maximális kötésméret egy dealhoz adott symbolban>
+"max_total_amount": 90,     <összesen ennyi pozíció lehet nyitva adott symbolban>
+"stop_loss": 10,            <stop loss limit>
+"trailer_delta": 0.10,      <trailer delta>
+"max_steps": 10             < amximum hány percig lehet nyitva a pozi>
+}

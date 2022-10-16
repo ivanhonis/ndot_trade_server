@@ -89,11 +89,18 @@ class NTrader:
 			ticker = self.binance_client.get_order_book(symbol="BTCUSDT", limit=1)
 			# print(ticker)
 			best_ask = float(ticker['asks'][0][0])
-			enter_price = best_ask + (tick_size * 100)
-			stop_price = enter_price - (tick_size * 500)
+			enter_price = best_ask + (tick_size * 300)
+			stop_price = enter_price - (tick_size * 800)
 			quantity = 25 / enter_price
 			quantity = round(quantity, 4)
-
+			
+			import time
+			import win32api
+			
+			server_time = self.binance_client.get_server_time()
+			gmtime = time.gmtime(int((server_time["serverTime"]) / 1000))
+			win32api.SetSystemTime(gmtime[0], gmtime[1], 0, gmtime[2], gmtime[3], gmtime[4], gmtime[5], 0)
+			
 			print(best_ask)
 			print(enter_price)
 			print(stop_price)
