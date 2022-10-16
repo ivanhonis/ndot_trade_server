@@ -9,7 +9,7 @@ import pickle
 import psutil
 
 
-class NTradeFolderManager:
+class NFolderManager:
     def __init__(self):
         self.main_dir = os.getcwd()
         self.slots_dir = self.main_dir + r'/SLOTS'
@@ -282,7 +282,7 @@ class NTradeFolderManager:
 if __name__ == "__main__":
     # print(psutil.cpu_percent(interval=.25, percpu=True))
 
-    tr = NTradeFolderManager()
+    tr = NFolderManager()
 
     # tr.add_slot("BTCUSDT1")
     # tr.remove_slot("BTCUSDT2")
